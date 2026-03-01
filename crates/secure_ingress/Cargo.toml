@@ -1,0 +1,24 @@
+[package]
+name = "secure_ingress"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[dependencies]
+axum = { version = "0.7", features = ["json"] }
+axum-server = { version = "0.8", features = ["tls-rustls"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.37", features = ["rt-multi-thread", "macros"] }
+rustls = "0.23"
+rustls-pemfile = "2.1"
+p256 = { version = "0.13", features = ["pkcs8"] }
+sha2 = "0.10"
+hex = "0.4"
+once_cell = "1.19"
+thiserror = "1.0"
+anyhow = "1.0"
+tempfile = "3.10"
+
+[dev-dependencies]
+rand = "0.8"

@@ -1,0 +1,51 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.3",
+  "version": 1,
+  "serialNumber": "urn:uuid:4a3bffe9-ad0b-4863-8e93-aed8a9362790",
+  "metadata": {
+    "timestamp": "2026-03-01T15:22:52.592344000Z",
+    "tools": [
+      {
+        "vendor": "CycloneDX",
+        "name": "cargo-cyclonedx",
+        "version": "0.5.7"
+      }
+    ],
+    "component": {
+      "type": "library",
+      "bom-ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_core#0.1.0",
+      "name": "dio_core",
+      "version": "0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/dio_core@0.1.0?download_url=file://.",
+      "components": [
+        {
+          "type": "library",
+          "bom-ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_core#0.1.0 bin-target-0",
+          "name": "dio_core",
+          "version": "0.1.0",
+          "purl": "pkg:cargo/dio_core@0.1.0?download_url=file://.#src/lib.rs"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "cdx:rustc:sbom:target:triple",
+        "value": "aarch64-apple-darwin"
+      }
+    ]
+  },
+  "components": [],
+  "dependencies": [
+    {
+      "ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_core#0.1.0",
+      "dependsOn": []
+    }
+  ]
+}

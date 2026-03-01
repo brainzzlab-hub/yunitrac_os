@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/shared",
+  "crates/dio_core",
+  "crates/dio_udp",
+  "crates/secure_ingress",
+  "crates/secure_runner",
+  "crates/ro_out_receiver",
+  "crates/skeleton",
+  "crates/cm",
+  "crates/ac",
+  "crates/va_gate",
+  "crates/ro_in",
+  "crates/yuni_boundary",
+  "crates/yuni_verify",
+]
+
+[workspace.package]
+edition = "2021"
+license = "Proprietary"

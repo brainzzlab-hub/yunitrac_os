@@ -1,0 +1,14 @@
+[advisories]
+yanked = "deny"
+unmaintained = "all"
+unsound = "all"
+ignore = [
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile bundled via rustls; no maintained alternative; tracked upstream" },
+]
+
+[licenses]
+allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "MPL-2.0", "OpenSSL", "Unicode-3.0"]
+exceptions = []
+
+[bans]
+deny = []

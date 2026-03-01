@@ -1,0 +1,26 @@
+# Multi-stage Dockerfile for ro_out_receiver (outside boundary)
+
+ARG RUST_VERSION=1.85.0
+
+FROM rust:${RUST_VERSION}-slim AS builder
+WORKDIR /work
+COPY . .
+RUN cargo build --release -p ro_out_receiver
+
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -r app && useradd -r -g app -d /app -s /sbin/nologin app
+
+WORKDIR /app
+COPY --from=builder /work/target/release/ro_out_receiver /usr/local/bin/ro_out_receiver
+
+# Artifact output is expected to be mounted to /artifacts
+RUN mkdir -p /artifacts && chown -R app:app /artifacts
+
+USER app:app
+
+ENV RO_OUT_DIR=/artifacts
+
+ENTRYPOINT ["/usr/local/bin/ro_out_receiver"]

@@ -1,0 +1,6 @@
+*.bin -text
+*.der -text
+*.key -text
+*.pem -text
+*.p8  -text
+*.sig -text

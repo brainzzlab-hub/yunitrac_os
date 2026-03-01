@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          components: clippy, rustfmt
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt -- --check
+      - name: clippy
+        run: cargo clippy -- -D warnings
+      - name: test
+        run: cargo test
+      - name: build
+        run: cargo build --release
+      - name: gate enterprise boundary
+        run: bash scripts/gate_enterprise.sh
+      - name: prove
+        run: ./scripts/prove.sh
+      - name: prove enterprise
+        run: ./scripts/prove_enterprise.sh
+      - name: cargo deny
+        run: cargo deny check
+      - name: cargo audit
+        run: cargo audit --locked
+      - name: sbom
+        run: ./scripts/sbom_generate.sh
+      - name: install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - name: fuzz build (decode)
+        run: ./scripts/fuzz_build.sh

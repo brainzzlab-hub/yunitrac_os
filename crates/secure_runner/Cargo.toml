@@ -1,0 +1,10 @@
+[package]
+name = "secure_runner"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[dependencies]
+dio_core = { path = "../dio_core" }
+shared = { path = "../shared" }
+hex = "0.4"

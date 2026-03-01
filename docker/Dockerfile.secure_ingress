@@ -1,0 +1,34 @@
+# Multi-stage Dockerfile for secure_ingress (outside boundary)
+
+ARG RUST_VERSION=1.85.0
+
+FROM rust:${RUST_VERSION}-slim AS builder
+WORKDIR /work
+COPY . .
+# Build only the secure_ingress binary (release)
+RUN cargo build --release -p secure_ingress
+
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -r app && useradd -r -g app -d /app -s /sbin/nologin app
+
+WORKDIR /app
+COPY --from=builder /work/target/release/secure_ingress /usr/local/bin/secure_ingress
+
+# Default dirs (mounted as volumes in compose)
+RUN mkdir -p /certs /data/nonce_ledger && chown -R app:app /certs /data
+
+USER app:app
+
+ENV INGRESS_BIND=0.0.0.0:8443 \
+    INGRESS_SERVER_CERT=/certs/server.crt \
+    INGRESS_SERVER_KEY=/certs/server.key \
+    INGRESS_CLIENT_CA=/certs/client_ca.crt \
+    INGRESS_HL_PUBKEY_PEM=/certs/hl_pubkey.pem \
+    NONCE_LEDGER_PATH=/data/nonce_ledger/ledger.log
+
+EXPOSE 8443
+
+ENTRYPOINT ["/usr/local/bin/secure_ingress"]

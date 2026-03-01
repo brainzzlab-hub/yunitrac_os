@@ -1,0 +1,17 @@
+[package]
+name = "fuzz"
+version = "0.1.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+libfuzzer-sys = "0.4"
+dio_core = { path = "../crates/dio_core" }
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "fuzz_decode_recordframe"
+path = "fuzz_targets/fuzz_decode_recordframe.rs"
+doc = false

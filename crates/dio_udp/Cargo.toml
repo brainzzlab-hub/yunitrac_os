@@ -1,0 +1,12 @@
+[package]
+name = "dio_udp"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[features]
+default = []
+udp = []
+
+[dependencies]
+dio_core = { path = "../dio_core" }

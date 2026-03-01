@@ -1,0 +1,12 @@
+/target/
+**/*.rs.bk
+Cargo.lock
+/tokens/
+/artifacts/
+softhsm2.conf
+*.pem
+*.p8
+*.key
+*.der
+*.bin
+*.sig

@@ -1,0 +1,71 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.3",
+  "version": 1,
+  "serialNumber": "urn:uuid:c711db5a-f30e-475a-be1f-53957180914f",
+  "metadata": {
+    "timestamp": "2026-03-01T15:22:52.593229000Z",
+    "tools": [
+      {
+        "vendor": "CycloneDX",
+        "name": "cargo-cyclonedx",
+        "version": "0.5.7"
+      }
+    ],
+    "component": {
+      "type": "library",
+      "bom-ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_udp#0.1.0",
+      "name": "dio_udp",
+      "version": "0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/dio_udp@0.1.0?download_url=file://.",
+      "components": [
+        {
+          "type": "library",
+          "bom-ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_udp#0.1.0 bin-target-0",
+          "name": "dio_udp",
+          "version": "0.1.0",
+          "purl": "pkg:cargo/dio_udp@0.1.0?download_url=file://.#src/lib.rs"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "cdx:rustc:sbom:target:triple",
+        "value": "aarch64-apple-darwin"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_core#0.1.0",
+      "name": "dio_core",
+      "version": "0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/dio_core@0.1.0?download_url=file://../dio_core"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_core#0.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_udp#0.1.0",
+      "dependsOn": [
+        "path+file:///Users/brainzzlab/Dev/yunitrack_workdir/crates/dio_core#0.1.0"
+      ]
+    }
+  ]
+}

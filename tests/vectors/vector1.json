@@ -1,0 +1,15 @@
+{
+  "canon_header_json": "e30=",
+  "canon_code_bytes": "",
+  "mode": "ANALYZE",
+  "sliders": { "step": 2, "s1": 10, "s2": 20, "s3": 30, "s4": 40 },
+  "budgets": { "max_attempts": 1, "max_tokens": 1000 },
+  "approvals": {
+    "nonce": "n1",
+    "proposal_id": "p1",
+    "actions": [
+      { "action": "APPROVE", "signature_b64": null }
+    ]
+  },
+  "retry_epoch": 0
+}

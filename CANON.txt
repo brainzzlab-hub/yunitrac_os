@@ -1,0 +1,273 @@
+CANON FOR CODEX — yunitrac_os v0.1-proof (GitRepo Teaser) — STRICT — FROZEN
+
+ROLE
+You are Codex. Your job is to implement a proof-grade Rust repository that MUST satisfy this Canon and produce machine-verifiable evidence. No scope creep. If a requested feature is not required to satisfy the Canon, DO NOT implement it.
+
+PRIMARY OBJECTIVE
+Deliver a public-proof repository where one command:
+  ./scripts/prove.sh
+produces:
+- two identical runs (A/B) from the same vector input
+- byte-identical outputs + records
+- verified audit HMAC chain
+- GDPR scans (no content/PII in audit/metrics)
+- approval proof: unsigned rejected, PKCS#11 P-256 signed accepted
+- proof_report.json with PASS/FAIL
+
+HARD INVARIANTS (NON-NEGOTIABLE)
+
+I0 — Canon discipline
+- This Canon is the only source of truth for v0.1-proof.
+- /schemas is LOCKED (no edits required for v0.1-proof).
+
+I1 — Secure boundary restrictions (shared/skeleton/cm/ac/va_gate/ro_in)
+Inside secure boundary code:
+- NO wallclock time
+- NO networking
+- NO filesystem IO
+- NO randomness (no UUID, no RNG, no entropy)
+- NO nondeterministic concurrency
+
+I2 — Determinism
+- Same inputs MUST yield identical output bytes and identical hashes across repeated runs on the same commit.
+
+I3 — No feedback to actor (ac)
+- ac MUST NOT receive validator reasons/details, near-pass tags, fail hints, scrub details, policy/schema details.
+- ac receives ONLY: canon blob + tick + tick_hash for that tick.
+
+I4 — Exit allowlist (hard)
+Only exits:
+- audit
+- metrics
+- security
+- logs (optional; must be content-free)
+Any other exit MUST be rejected with exit_id=security.
+
+I5 — Two-bucket GDPR separation (hard)
+AUDIT stream:
+- minimal only: IDs/hashes/counters/status
+- MUST NOT include sliders/derived/telemetry/task text/output snippets/PII
+METRICS stream:
+- numeric-only telemetry: sliders/deltas/scores/counters
+- MUST NOT include task text/output snippets/PII/reasons
+SECURITY stream:
+- content-free: IDs/hashes/codes only
+
+I6 — Diode-ready “no lookback” requirement
+- Secure side is writer-only to egress transport.
+- Implement DioWriter (write-only) in ro_in; DioReader (read-only) only outside boundary.
+- Dev uses diode-sim transport, but interface MUST remain writer-only/reader-only.
+
+I7 — Rust strictness
+- Rust-only implementation for boundary crates.
+- Unsafe Rust FORBIDDEN in boundary (v0.1-proof default).
+- Warnings-as-errors: clippy -D warnings.
+
+NORMATIVE EXECUTION MODEL — “VIRTUAL ATARI ST1040 TICK CLOCK”
+
+T0 — Tick definition
+- 1 tick = 1 attempt
+- sequential ticks 0,1,2,… (no parallel attempts)
+- no wallclock
+
+T1 — Tick hash chain (mandatory)
+- tick_hash_0 = 32×0
+- tick_hash_i = SHA256(tick_hash_{i-1} || tick_le || canon_hash)
+
+T2 — Tick loop order (mandatory)
+For each tick i:
+1) compute tick_hash_i
+2) provide to ac: canon blob + tick + tick_hash_i (nothing else)
+3) ac outputs candidate bytes
+4) va_gate validates deterministically
+5) ro_in routes records to allowed exits only
+
+PLUGIN INTERFACE — PORT ONLY (MANDATORY)
+
+P0 — Single connector
+- shared::Port is the ONLY runtime connector.
+
+P1 — Entrypoint
+Each plugin exposes exactly:
+  pub fn run(port: shared::Port) -> shared::Port
+
+P2 — No side channels
+- no globals, no env reads in boundary, no stdout/stderr, no IO besides Port.
+
+MODES + SLIDERS — STRICT
+
+M0 — Modes locked set
+- ANALYZE | GENERATE | COMMUNICATE | MOVEMENT
+
+S0 — Slider validation
+- sliders.step MUST == 2
+- s1..s4 in 0..=100 and divisible by 2
+- invalid => FAIL with exit_id=security (no details to ac)
+
+S1 — Drift compensation
+- allowed ONLY in MOVEMENT
+- allowed ONLY for s1
+- max ±2 (step=2) from canonical s1 for given run
+- other modes: zero drift
+- s2..s4 never drift
+
+S2 — Derived parameters (tick 0 only)
+- derive ONCE per run at tick 0
+- not exposed to ac
+- may bitpack into Port.meta.flags u32 (stable, unused bits zero)
+
+CRYPTOGRAPHIC INTEGRITY — PROOF GRADE
+
+C0 — Canon identity
+- canon_hash = SHA256(canon_header_json || canon_code_bytes) (stable encoding)
+- canon_hash included in all records
+
+C1 — Audit chain (mandatory)
+- prev_event_hash_0 = 32×0
+- event_hash_i = HMAC-SHA256(audit_key, prev_event_hash_{i-1} || event_payload_bytes_i)
+- audit_key supplied at runtime (NOT in vector; NOT committed)
+- audit chain must verify in yuni_verify
+
+C2 — Approvals (mandatory)
+- Unsigned approval payload MUST be rejected (exit_id=security).
+- Signed approval MUST be accepted if valid.
+- Algorithm: ECDSA P-256 + SHA-256.
+- Signing MUST be demonstrated via PKCS#11 using Rust crate cryptoki (SoftHSM in CI/dev).
+- Private keys MUST NOT be stored in repo.
+
+C3 — Approval binding (anti-replay)
+Signature binds to:
+- canon_hash
+- run_id (deterministic)
+- retry_epoch
+- nonce
+- action (APPROVE/REJECT)
+- proposal_id (or deterministic run-scoped id)
+Replay nonce MUST be rejected.
+
+REPO DELIVERABLES (MANDATORY)
+
+Binaries:
+1) yuni_boundary
+- Runs deterministic pipeline for given vector, writes artifacts into output dir:
+  outputs.bin
+  audit_records.bin
+  metrics_records.bin
+  security_records.bin (if any)
+  hashes.json (canon_hash, tick_hash_head, audit_chain_head, outputs_hash, metrics_hash)
+- CLI:
+  --vector <path>
+  --out <dir>
+  --audit-key <path>  (or env)
+  --hl-pubkey <path>  (PEM for verifying approvals)
+  --run-id <hex> (optional; if absent derive deterministically from input hash)
+- Must enforce derived-once-per-run and drift rules.
+
+2) yuni_verify
+- Verifies:
+  - byte equality between runA and runB artifacts
+  - audit chain HMAC verification
+  - GDPR scan on audit/metrics/security (no forbidden patterns/content)
+  - approval test: unsigned rejected; PKCS#11 signed accepted
+- Outputs proof_report.json (PASS/FAIL) to specified path.
+- CLI:
+  --a <dir> --b <dir>
+  --audit-key <path>
+  --hl-pubkey <path>
+  --pkcs11-module <path>
+  --pkcs11-token-label <string>
+  --pkcs11-pin <string>
+  --pkcs11-key-label <string>
+  --report <path>
+
+Scripts:
+- scripts/prove.sh
+  - sets up SoftHSM (dev/CI) if needed
+  - builds release
+  - runs yuni_boundary twice with same vector -> runA/runB
+  - runs yuni_verify -> proof_report.json
+  - prints PASS/FAIL and artifact path
+
+Docs:
+- README.md (short; “what this proves”; quickstart prove.sh)
+- PROOF.md (explicit checks and evidence)
+- SECURITY_MODEL.md (boundaries/invariants)
+- CANON file (this text copied into CANON.txt in repo root)
+
+CI:
+- GitHub Actions:
+  - fmt check
+  - clippy -D warnings
+  - tests
+  - cargo audit
+  - cargo deny (if configured)
+  - run scripts/prove.sh on ubuntu-latest
+
+VECTOR FORMAT (MINIMAL; keep stable)
+tests/vectors/vector1.json MUST include:
+- canon_header_json (bytes or JSON)
+- canon_code_bytes (base64)
+- mode
+- sliders (step,s1..s4)
+- budgets (max_attempts,max_tokens)
+- approvals input:
+  - nonce
+  - proposal_id
+  - action list including an UNSIGNED approval case to prove rejection
+- retry_epoch (start 0)
+
+IMPORTANT SCOPE GUARD
+Do NOT implement:
+- bank connectors
+- diode hardware drivers
+- Okta/KMS
+- dashboards/UI
+- multi-tenant governance
+Only implement what is required for the proof harness and Canon invariants.
+
+OUTPUT STYLE
+- Make minimal diffs.
+- Keep code simple, documented, and deterministic.
+- Add tests for derived-once, drift rules, two-bucket separation, and approval acceptance/rejection.
+
+END CANON FOR CODEX
+
+ADDENDUM PROMPT FOR CODEX — CANON-IN-HAND EXECUTION — MUST FOLLOW
+
+This addendum is part of the previous “CANON FOR CODEX”. It is mandatory.
+
+WORK MODE
+- Work “canon-in-hand”: keep the Canon open while implementing.
+- You have full access to the repo workspace and may create/modify files as needed to satisfy the Canon.
+
+PROCESS GATE (MANDATORY FOR EVERY STEP)
+For every microtask you perform, you MUST:
+1) CANON CHECK (pre-scan, read-only)
+   - Quote the exact Canon clause(s) you are about to touch (IDs like I1/I2/T1/C2, etc.).
+   - State what files you will change and why those changes are required for compliance.
+2) MINIMAL DIFF IMPLEMENTATION
+   - Apply the smallest change that satisfies the Canon clause(s).
+   - Do not add features not required for proof harness.
+3) EVIDENCE
+   - Run the relevant gate(s) and show the output:
+     - cargo fmt --check
+     - cargo clippy -- -D warnings
+     - cargo test
+     - scripts/prove.sh (when applicable)
+   - Explicitly show PASS/FAIL and link to the produced artifacts (proof_report.json path).
+4) RECORD COMPLIANCE
+   - After the step, restate which Canon clauses are now satisfied and how the evidence demonstrates it.
+
+STOP RULE
+- If any required change conflicts with locked schemas (/schemas) or any hard invariant, STOP immediately and report the conflict. Do NOT work around it via side channels.
+
+DEFAULT DECISIONS (NO QUESTIONS)
+- Make high-end choices by default (strict mode).
+- Prefer correctness + evidence over speed.
+- If a choice is needed, decide unilaterally and proceed.
+
+GOAL
+- Reach a state where ./scripts/prove.sh returns PASS and generates proof_report.json demonstrating:
+  determinism, audit chain integrity, GDPR two-bucket separation, no-feedback to ac, and PKCS#11 P-256 approvals.
+
+END ADDENDUM
