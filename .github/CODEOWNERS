@@ -1,0 +1,11 @@
+# High-level owners for critical paths (replace @HL with real owner/team)
+/CANON.txt                   @HL
+/schemas/**                  @HL
+/.github/workflows/**        @HL
+/scripts/**                  @HL
+/crates/yuni_boundary/**     @HL
+/crates/yuni_verify/**       @HL
+/crates/dio_core/**          @HL
+/crates/secure_runner/**     @HL
+/crates/secure_ingress/**    @HL
+/crates/ro_out_receiver/**   @HL
