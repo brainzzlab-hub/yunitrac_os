@@ -83,9 +83,9 @@ out = {
         "artifacts/proof_report_lite.json"
     ],
     "EXCLUDED_SET": [
-        {"pattern":"target/**","note":"build outputs"},
+        {"pattern":"**/*.log","note":"ordering variance"},
         {"pattern":"artifacts/lite/tmp_*/**","note":"scratch"},
-        {"pattern":"**/*.log","note":"ordering variance"}
+        {"pattern":"target/**","note":"build outputs"}
     ]
 }
 path = pathlib.Path(sys.argv[1])

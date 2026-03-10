@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yunitrack.dev/schemas_pad_c/v1/shot_request.schema.json",
+  "title": "ShotRequest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "shot_id", "scene_id", "bible_id", "character_id", "style_profile_id", "requested_variance"],
+  "properties": {
+    "version": {"const": "1"},
+    "shot_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "scene_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "bible_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "character_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "style_profile_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "requested_variance": {"type": "integer", "minimum": 0, "maximum": 100, "multipleOf": 2},
+    "reference_asset_ids": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "items": {"type": "string", "minLength": 1, "maxLength": 64}
+    }
+  }
+}

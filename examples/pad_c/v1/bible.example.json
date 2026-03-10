@@ -1,0 +1,26 @@
+{
+  "version": "1",
+  "bible_id": "bible_main",
+  "characters": [
+    {
+      "character_id": "char_alex",
+      "allowlist_tokens": ["studio portrait", "neutral pose"],
+      "denylist_tokens": ["helmet"],
+      "wardrobe_ids": ["wardrobe_casual_v1"],
+      "palette_ids": ["palette_daylight_v1"]
+    }
+  ],
+  "style_profiles": [
+    {
+      "style_profile_id": "style_cinematic_v1",
+      "allowlist_tokens": ["cinematic", "anamorphic"],
+      "denylist_tokens": ["fish-eye"],
+      "camera_profile_id": "cam_a",
+      "lighting_profile_id": "light_soft_key"
+    }
+  ],
+  "variance_policy": {
+    "max_drift_points": 12,
+    "allowed_variance_step": 2
+  }
+}

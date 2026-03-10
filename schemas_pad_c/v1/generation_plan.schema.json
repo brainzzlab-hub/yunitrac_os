@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yunitrack.dev/schemas_pad_c/v1/generation_plan.schema.json",
+  "title": "GenerationPlan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "shot_id",
+    "scene_id",
+    "bible_id",
+    "resolved",
+    "prompt_tokens_allowlist",
+    "prompt_tokens_denylist",
+    "sec_codes",
+    "determinism_scope_note"
+  ],
+  "properties": {
+    "version": {"const": "1"},
+    "shot_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "scene_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "bible_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "resolved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["character_id", "style_profile_id", "camera_profile_id", "lighting_profile_id"],
+      "properties": {
+        "character_id": {"type": "string", "minLength": 1, "maxLength": 64},
+        "style_profile_id": {"type": "string", "minLength": 1, "maxLength": 64},
+        "camera_profile_id": {"type": "string", "minLength": 1, "maxLength": 64},
+        "lighting_profile_id": {"type": "string", "minLength": 1, "maxLength": 64}
+      }
+    },
+    "prompt_tokens_allowlist": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 64,
+      "items": {"type": "string", "minLength": 1, "maxLength": 96}
+    },
+    "prompt_tokens_denylist": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 64,
+      "items": {"type": "string", "minLength": 1, "maxLength": 96}
+    },
+    "sec_codes": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "items": {
+        "type": "string",
+        "enum": [
+          "SB_FORBIDDEN_TOKEN",
+          "SB_UNKNOWN_CHARACTER",
+          "SB_UNKNOWN_STYLE_PROFILE",
+          "SB_VARIANCE_OUT_OF_RANGE",
+          "SB_CAMERA_PROFILE_MISSING",
+          "SB_LIGHTING_PROFILE_MISSING"
+        ]
+      }
+    },
+    "determinism_scope_note": {"type": "string", "minLength": 1, "maxLength": 512}
+  }
+}
