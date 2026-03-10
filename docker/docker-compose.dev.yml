@@ -1,34 +1,7 @@
 version: "3.9"
 
+# Dev-safe base: offline-by-default, no secrets, no published ports.
 services:
-  secure_ingress:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.secure_ingress
-    image: yunitrack/secure_ingress:dev
-    ports:
-      - "8443:8443"
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-    volumes:
-      - ./secrets/server.crt:/certs/server.crt:ro
-      - ./secrets/server.key:/certs/server.key:ro
-      - ./secrets/client_ca.crt:/certs/client_ca.crt:ro
-      - ./secrets/hl_pubkey.pem:/certs/hl_pubkey.pem:ro
-      - ./artifacts/nonce_ledger:/data/nonce_ledger
-    environment:
-      INGRESS_BIND: "0.0.0.0:8443"
-      INGRESS_SERVER_CERT: "/certs/server.crt"
-      INGRESS_SERVER_KEY: "/certs/server.key"
-      INGRESS_CLIENT_CA: "/certs/client_ca.crt"
-      INGRESS_HL_PUBKEY_PEM: "/certs/hl_pubkey.pem"
-      NONCE_LEDGER_PATH: "/data/nonce_ledger/ledger.log"
-
   ro_out_receiver:
     build:
       context: ..
@@ -42,6 +15,6 @@ services:
     tmpfs:
       - /tmp
     volumes:
-      - ./artifacts/enterprise:/artifacts
+      - ./artifacts/enterprise:/artifacts:ro
     environment:
       RO_OUT_DIR: "/artifacts"

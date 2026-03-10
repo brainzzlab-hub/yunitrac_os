@@ -1,0 +1,6 @@
+{"event_type":"LLM_CALL","agent_id":"agent0","step":0,"payload":"hello world","status":"OK"}
+{"event_type":"TOOL_CALL","agent_id":"agent0","step":1,"span":"weather","payload":{"tool":"weather","args":{"city":"Paris"}}}
+{"event_type":"TOOL_RESULT","agent_id":"agent0","step":2,"span":"weather","payload":{"result":"clear"}}
+{"event_type":"STATE","agent_id":"agent0","step":3,"payload":{"plan":["check weather","respond"]}}
+{"event_type":"LLM_CALL","agent_id":"agent0","step":4,"span":"reply","payload":"The weather is clear."}
+{"event_type":"FINAL","agent_id":"agent0","step":5,"payload":"Done."}

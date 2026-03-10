@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yunitrack_os Operator Dashboard (read-only)</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #0f172a; background: #f8fafc; }
+    h1 { margin-bottom: 0.2rem; }
+    h2 { margin-top: 1.6rem; margin-bottom: 0.4rem; }
+    .banner { padding: 8px 12px; border-radius: 6px; background: #e2e8f0; display: inline-block; margin-bottom: 12px; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin: 8px 0; box-shadow: 0 1px 2px rgba(15,23,42,0.08); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+    th { background: #f1f5f9; }
+    .status-pass { color: #0f9d58; font-weight: 600; }
+    .status-fail { color: #d93025; font-weight: 600; }
+    .status-unknown { color: #6b7280; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>yunitrack_os Operator Dashboard</h1>
+  <div class="banner">Read-only • Offline • Deterministic • No network</div>
+  
+    <div class="card" style="background:#fef9c3;"><strong>FIXTURE MODE:</strong> using fixtures for: request_ledger</div>
+    <h2>Overview</h2>
+    <div class="grid"><div class="card"><strong>Enterprise proof:</strong> <span class="status-pass">PASS</span></div><div class="card"><strong>Lite proof:</strong> <span class="status-pass">PASS</span></div></div>
+
+    <h2>Guardrails (Lite)</h2>
+    <div class="card"><table><tr><th>Guardrail</th><th>Status</th></tr><tr><td>anti_replay_cross_run</td><td>PASS</td></tr><tr><td>boundary_scope_enforce</td><td>PASS</td></tr><tr><td>build_release</td><td>PASS</td></tr><tr><td>cargo_fmt</td><td>PASS</td></tr><tr><td>clippy</td><td>PASS</td></tr><tr><td>denylist_scan</td><td>PASS</td></tr><tr><td>determinism_BC</td><td>PASS</td></tr><tr><td>export_audit_packet</td><td>PASS</td></tr><tr><td>forbidden_deps_symbols_scan</td><td>PASS</td></tr><tr><td>fuzz_build</td><td>PASS</td></tr><tr><td>gdpr_scrub_scan</td><td>PASS</td></tr><tr><td>generate_sbom</td><td>PASS</td></tr><tr><td>hitl_verify</td><td>SKIP</td></tr><tr><td>license_policy_gate</td><td>PASS</td></tr><tr><td>lite_outputs_allowlist_scan</td><td>PASS</td></tr><tr><td>metrics_scan</td><td>PASS</td></tr><tr><td>no_feedback_leak_scan</td><td>PASS</td></tr><tr><td>pad_c_spec_check</td><td>PASS</td></tr><tr><td>scope_manifest</td><td>PASS</td></tr><tr><td>scope_manifest_verify</td><td>PASS</td></tr><tr><td>test</td><td>PASS</td></tr></table></div>
+
+    <h2>Approvals / Policy Checks (Lite)</h2>
+    <div class="card">{
+  "audit_content_free": true,
+  "metrics_numeric_bounded": true,
+  "pass": true,
+  "security_content_free": true
+}</div>
+
+    <h2>Anti-replay</h2>
+    <div class="card"><strong>Anti-replay:</strong> PASS</div>
+
+    <h2>Audit Chain (Enterprise)</h2>
+    <div class="card"><strong>Audit chain:</strong> UNKNOWN</div>
+
+    <h2>Determinism (Lite)</h2>
+    <div class="card"><strong>Required equality set:</strong> ["artifacts/lite/evidence_bundle/required_hashes.json", "artifacts/lite/scope_manifest.json", "artifacts/proof_report_lite.json"]<br><strong>Required hashes:</strong><pre>{
+  "/Users/brainzzlab/Dev/yunitrack_workdir/artifacts/lite/evidence_bundle/required_hashes.json": "a711d54943551e37e21d34cd80d7cd21f1e84de45664b752a6e5024bc02c3ef5",
+  "/Users/brainzzlab/Dev/yunitrack_workdir/artifacts/lite/scope_manifest.json": "6c0a5f43c912c42abd9ef19782467495f690a89ec85d0891346e7db3a2663d6d",
+  "/Users/brainzzlab/Dev/yunitrack_workdir/artifacts/proof_report_lite.json": "32033ae2f92d4e1ff8d278499dfe0253f9193ce62ebfbdd2ebc3d59d0432b816"
+}</pre></div>
+
+    <h2>Requests</h2>
+    <div class="card"><table><tr><th>created_seq</th><th>request_id</th><th>profile</th><th>decision</th><th>seccode</th><th>anti_replay</th><th>approvals_ref</th></tr><tr><td>1</td><td>REQ-0001</td><td>enterprise</td><td>ACCEPTED</td><td>SEC_SIGNED_ACCEPTED</td><td>PASS</td><td>APP-001</td></tr><tr><td>2</td><td>REQ-0002</td><td>enterprise</td><td>REJECTED</td><td>SEC_UNSIGNED_REJECTED</td><td>PASS</td><td></td></tr><tr><td>3</td><td>REQ-1001</td><td>lite</td><td>ACCEPTED</td><td>SEC_SIGNED_ACCEPTED</td><td>UNKNOWN</td><td>APP-XYZ</td></tr><tr><td>4</td><td>REQ-1002</td><td>lite</td><td>REJECTED</td><td>SEC_POLICY_VIOLATION</td><td>FAIL</td><td></td></tr><tr><td>5</td><td>REQ-2000</td><td>enterprise</td><td>ACCEPTED</td><td>SEC_SIGNED_ACCEPTED</td><td>PASS</td><td></td></tr></table></div>
+
+    
+    <h2>Controlled actions</h2>
+    <div class="card"><strong>Actions state:</strong> DISABLED (set YUNITRACK_DASH_ENABLE_ACTIONS=1 to enable)</div>
+    <div class="card"><strong>HITL markers:</strong> 1 staged</div>
+    <div class="card"><strong>HITL key registry:</strong> active_id=REPLACE_.. active=1 retired=0</div>
+    <div class="card"><strong>Action ledger:</strong> total=6 last_seq=5 counts=generate_evidence_index:2,run_proof_enterprise:2,verify_evidence_pack:2 signed=yes</div>
+    <div class="card"><table><tr><th>Action</th><th>Status</th><th>SecCode</th><th>Exit</th></tr><tr><td>run_proof_enterprise</td><td>DISABLED</td><td>DISABLED</td><td></td></tr><tr><td>run_proof_lite</td><td>DISABLED</td><td>DISABLED</td><td></td></tr><tr><td>export_audit_packet</td><td>DISABLED</td><td>DISABLED</td><td></td></tr><tr><td>export_incident_bundle</td><td>DISABLED</td><td>DISABLED</td><td></td></tr><tr><td>manage_hitl_markers</td><td>DISABLED</td><td>DISABLED</td><td></td></tr><tr><td>sign_hitl_markers</td><td>DISABLED</td><td>DISABLED</td><td></td></tr><tr><td>sign_hitl_markers_ed25519</td><td>DISABLED</td><td>DISABLED</td><td></td></tr><tr><td>verify_ledger_signature</td><td>DISABLED</td><td>DISABLED</td><td></td></tr></table></div>
+    
+    
+</body>
+</html>

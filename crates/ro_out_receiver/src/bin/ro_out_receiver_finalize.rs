@@ -1,12 +1,30 @@
 use std::collections::BTreeMap;
 use std::env;
-use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
 
 use ro_out_receiver::build_bundle;
 
-fn main() -> Result<(), Box<dyn Error>> {
+const PASS_LINE: &str = "PASS: evidence_bundle";
+const FAIL_IO: &str = "FAIL: FINALIZE_IO";
+const FAIL_BUILD: &str = "FAIL: FINALIZE_BUILD";
+const FAIL_CHECK: &str = "FAIL: FINALIZE_CHECK";
+
+fn main() {
+    match run_finalize() {
+        Ok(true) => println!("{PASS_LINE}"),
+        Ok(false) => {
+            println!("{FAIL_CHECK}");
+            std::process::exit(1);
+        }
+        Err(code) => {
+            println!("{code}");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn run_finalize() -> Result<bool, &'static str> {
     let args: Vec<String> = env::args().collect();
     let runs_dir = args
         .get(1)
@@ -17,11 +35,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("secrets/audit_key.bin"));
 
-    let audit_key = fs::read(&audit_key_path)?;
-    let bundle = build_bundle(&runs_dir, &audit_key)?;
+    let audit_key = fs::read(&audit_key_path).map_err(|_| FAIL_IO)?;
+    let bundle = build_bundle(&runs_dir, &audit_key).map_err(|_| FAIL_BUILD)?;
 
     let bundle_dir = runs_dir.join("evidence_bundle");
-    fs::create_dir_all(&bundle_dir)?;
+    fs::create_dir_all(&bundle_dir).map_err(|_| FAIL_IO)?;
 
     write_json(&bundle_dir.join("manifest.json"), &bundle.manifest)?;
     write_json(&bundle_dir.join("comparisons.json"), &bundle.comparisons)?;
@@ -60,17 +78,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let proof_report = proof_report_dir.join("proof_report_enterprise.json");
     write_json(&proof_report, &summary)?;
 
-    if bundle.pass {
-        println!("PASS: evidence_bundle");
-        Ok(())
-    } else {
-        println!("FAIL: evidence_bundle");
-        std::process::exit(1);
-    }
+    Ok(bundle.pass)
 }
 
-fn write_json(path: &PathBuf, value: &impl serde::Serialize) -> Result<(), Box<dyn Error>> {
-    let bytes = serde_json::to_vec_pretty(value)?;
-    fs::write(path, bytes)?;
+fn write_json(path: &PathBuf, value: &impl serde::Serialize) -> Result<(), &'static str> {
+    let bytes = serde_json::to_vec_pretty(value).map_err(|_| FAIL_IO)?;
+    fs::write(path, bytes).map_err(|_| FAIL_IO)?;
     Ok(())
 }

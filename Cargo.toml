@@ -15,6 +15,7 @@ members = [
   "crates/yuni_boundary",
   "crates/yuni_verify",
 ]
+exclude = ["fuzz"]
 
 [workspace.package]
 edition = "2021"

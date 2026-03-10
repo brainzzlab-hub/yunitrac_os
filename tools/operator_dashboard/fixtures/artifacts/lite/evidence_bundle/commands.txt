@@ -1,0 +1,9 @@
+commands_log_v1
+guardrails: denylist_scan=PASS
+guardrails: forbidden_deps_symbols_scan=PASS
+guardrails: metrics_scan=PASS (no_metrics_artifacts)
+guardrails: no_feedback_leak_scan=PASS
+guardrails: pad_c_spec_check=PASS
+guardrails: anti_replay_cross_run=PASS
+guardrails: lite_outputs_allowlist_scan=PASS
+guardrails: scope_manifest_verify=PASS

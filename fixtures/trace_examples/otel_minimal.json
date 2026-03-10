@@ -1,0 +1,70 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {},
+      "scopeSpans": [
+        {
+          "scope": {},
+          "spans": [
+            {
+              "name": "llm_prompt",
+              "spanId": "abcdefff12345678",
+              "attributes": {
+                "gen_ai.prompt": "hello world",
+                "agent.id": "agent0",
+                "step": 0
+              }
+            },
+            {
+              "name": "tool_call_weather",
+              "spanId": "abcdefff12345679",
+              "attributes": {
+                "gen_ai.tool.name": "weather",
+                "gen_ai.request": {"city": "Paris"},
+                "agent.id": "agent0",
+                "step": 1
+              }
+            },
+            {
+              "name": "tool_result_weather",
+              "spanId": "abcdefff1234567a",
+              "attributes": {
+                "output": {"result": "clear"},
+                "agent.id": "agent0",
+                "step": 2
+              }
+            },
+            {
+              "name": "state_update",
+              "spanId": "abcdefff1234567b",
+              "attributes": {
+                "input": {"plan": ["check weather", "respond"]},
+                "agent.id": "agent0",
+                "step": 3
+              }
+            },
+            {
+              "name": "llm_reply",
+              "spanId": "abcdefff1234567c",
+              "attributes": {
+                "gen_ai.model": "demo-llm",
+                "output": "The weather is clear.",
+                "agent.id": "agent0",
+                "step": 4
+              }
+            },
+            {
+              "name": "final_response",
+              "spanId": "abcdefff1234567d",
+              "attributes": {
+                "output": "Done.",
+                "agent.id": "agent0",
+                "step": 5
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

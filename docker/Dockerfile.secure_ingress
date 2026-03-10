@@ -23,10 +23,10 @@ RUN mkdir -p /certs /data/nonce_ledger && chown -R app:app /certs /data
 USER app:app
 
 ENV INGRESS_BIND=0.0.0.0:8443 \
-    INGRESS_SERVER_CERT=/certs/server.crt \
-    INGRESS_SERVER_KEY=/certs/server.key \
-    INGRESS_CLIENT_CA=/certs/client_ca.crt \
-    INGRESS_HL_PUBKEY_PEM=/certs/hl_pubkey.pem \
+    SECURE_INGRESS_CERT=/certs/server.crt \
+    SECURE_INGRESS_KEY=/certs/server.key \
+    SECURE_INGRESS_CA_CERT=/certs/client_ca.crt \
+    SECURE_INGRESS_HL_PUBLIC_KEY_PEM=/certs/hl_pubkey.pem \
     NONCE_LEDGER_PATH=/data/nonce_ledger/ledger.log
 
 EXPOSE 8443

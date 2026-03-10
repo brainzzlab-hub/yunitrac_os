@@ -11,20 +11,42 @@ use serde::Serialize;
 use shared::{compute_event_hash, sha256_bytes, ApprovalPayload, Vector, TICK_HASH_ZERO};
 use std::env;
 
-fn usage() -> ! {
-    panic!(
-        "Usage:\n  yuni_verify --sign --vector <file> --run-id <hex> --out <sig.der>\n  yuni_verify verify --a <dir> --b <dir> --c <dir> --report <file> --audit-key <keyfile>\n  (legacy verify form also accepted: yuni_verify --a <dir> --b <dir> [--c <dir>] --report <file> --audit-key <keyfile>)\n"
-    );
-}
+const PASS_LINE: &str = "PASS";
+const FAIL_USAGE: &str = "FAIL: VERIFY_USAGE";
+const FAIL_IO: &str = "FAIL: VERIFY_IO";
+const FAIL_PARSE: &str = "FAIL: VERIFY_PARSE";
+const FAIL_PKCS11: &str = "FAIL: VERIFY_PKCS11";
+const FAIL_REPORT: &str = "FAIL: VERIFY_REPORT";
+const FAIL_CHECK: &str = "FAIL: VERIFY_CHECK_FAIL";
 
 fn main() {
+    match run() {
+        Ok(Outcome::Pass) => {
+            println!("{PASS_LINE}");
+        }
+        Ok(Outcome::CheckFail) => {
+            println!("{FAIL_CHECK}");
+            std::process::exit(1);
+        }
+        Err(code) => {
+            println!("{code}");
+            std::process::exit(1);
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum Outcome {
+    Pass,
+    CheckFail,
+}
+
+fn run() -> Result<Outcome, &'static str> {
     let mut args = env::args().skip(1);
-    let first = match args.next() {
-        Some(x) => x,
-        None => usage(),
+    let Some(first) = args.next() else {
+        return Err(FAIL_USAGE);
     };
 
-    // SIGN mode
     if first == "--sign" {
         let mut vector: Option<String> = None;
         let mut run_id: Option<String> = None;
@@ -35,19 +57,16 @@ fn main() {
                 "--vector" => vector = args.next(),
                 "--run-id" => run_id = args.next(),
                 "--out" => out = args.next(),
-                _ => usage(),
+                _ => return Err(FAIL_USAGE),
             }
         }
 
-        let vector = vector.unwrap_or_else(|| usage());
-        let run_id = run_id.unwrap_or_else(|| usage());
-        let out = out.unwrap_or_else(|| usage());
+        let (Some(vector), Some(run_id), Some(out)) = (vector, run_id, out) else {
+            return Err(FAIL_USAGE);
+        };
 
-        sign_from_vector(&vector, &run_id, &out).unwrap_or_else(|e| {
-            eprintln!("FAIL: {e}");
-            std::process::exit(1)
-        });
-        return;
+        sign_from_vector(&vector, &run_id, &out).map_err(map_sign_err)?;
+        return Ok(Outcome::Pass);
     }
 
     // VERIFY mode (new form with leading "verify" or legacy form starting with --a/--b/etc)
@@ -58,7 +77,7 @@ fn main() {
         verify_args.push(first);
         verify_args.extend(args);
     } else {
-        usage();
+        return Err(FAIL_USAGE);
     }
 
     let mut a_dir: Option<String> = None;
@@ -75,25 +94,37 @@ fn main() {
             "--c" => c_dir = it.next(),
             "--report" => report = it.next(),
             "--audit-key" => audit_key = it.next(),
-            _ => usage(),
+            _ => return Err(FAIL_USAGE),
         }
     }
 
-    let a_dir = a_dir.unwrap_or_else(|| usage());
-    let b_dir = b_dir.unwrap_or_else(|| usage());
+    let (Some(a_dir), Some(b_dir), Some(report), Some(audit_key)) =
+        (a_dir, b_dir, report, audit_key)
+    else {
+        return Err(FAIL_USAGE);
+    };
     let c_dir = c_dir.unwrap_or_else(|| b_dir.clone());
-    let report = report.unwrap_or_else(|| usage());
-    let audit_key = audit_key.unwrap_or_else(|| usage());
 
-    verify_runs(&a_dir, &b_dir, &c_dir, &audit_key, &report);
+    let pass = verify_runs(&a_dir, &b_dir, &c_dir, &audit_key, &report)?;
+    if pass {
+        Ok(Outcome::Pass)
+    } else {
+        Ok(Outcome::CheckFail)
+    }
 }
 
-fn verify_runs(a_dir: &str, b_dir: &str, c_dir: &str, audit_key_path: &str, report_path: &str) {
-    let audit_key = std::fs::read(audit_key_path).expect("audit key");
+fn verify_runs(
+    a_dir: &str,
+    b_dir: &str,
+    c_dir: &str,
+    audit_key_path: &str,
+    report_path: &str,
+) -> Result<bool, &'static str> {
+    let audit_key = std::fs::read(audit_key_path).map_err(|_| FAIL_IO)?;
 
-    let a = Artifacts::load(a_dir);
-    let b = Artifacts::load(b_dir);
-    let c = Artifacts::load(c_dir);
+    let a = Artifacts::load(a_dir)?;
+    let b = Artifacts::load(b_dir)?;
+    let c = Artifacts::load(c_dir)?;
 
     let report = vec![
         check_eq("outputs_equal_ab", &a.outputs, &b.outputs),
@@ -117,14 +148,9 @@ fn verify_runs(a_dir: &str, b_dir: &str, c_dir: &str, audit_key_path: &str, repo
         "pass": overall_pass,
         "checks": report,
     });
-    std::fs::write(report_path, serde_json::to_vec_pretty(&summary).unwrap())
-        .expect("write report");
-    if overall_pass {
-        println!("PASS");
-    } else {
-        println!("FAIL");
-        std::process::exit(1);
-    }
+    let bytes = serde_json::to_vec_pretty(&summary).map_err(|_| FAIL_REPORT)?;
+    std::fs::write(report_path, bytes).map_err(|_| FAIL_REPORT)?;
+    Ok(overall_pass)
 }
 
 #[derive(Debug, Serialize)]
@@ -201,37 +227,34 @@ struct Artifacts {
 }
 
 impl Artifacts {
-    fn load(dir: &str) -> Self {
-        Self {
-            outputs: read_bin(dir, "outputs.bin"),
-            metrics: read_bin(dir, "metrics_records.bin"),
-            audit: read_bin(dir, "audit_records.bin"),
-            security: read_bin(dir, "security_records.bin"),
-        }
+    fn load(dir: &str) -> Result<Self, &'static str> {
+        Ok(Self {
+            outputs: read_bin(dir, "outputs.bin")?,
+            metrics: read_bin(dir, "metrics_records.bin")?,
+            audit: read_bin(dir, "audit_records.bin")?,
+            security: read_bin(dir, "security_records.bin")?,
+        })
     }
 }
 
-fn read_bin(dir: &str, file: &str) -> Vec<u8> {
+fn read_bin(dir: &str, file: &str) -> Result<Vec<u8>, &'static str> {
     let path = format!("{}/{}", dir, file);
-    std::fs::read(path).expect("read artifact")
+    std::fs::read(path).map_err(|_| FAIL_IO)
 }
 
-fn sign_from_vector(vector_path: &str, run_id_hex: &str, out: &str) -> Result<()> {
-    let vector_bytes = std::fs::read(vector_path)?;
-    let (vector, canon_code, canon_header) = Vector::parse(&vector_bytes).expect("parse vector");
+fn sign_from_vector(vector_path: &str, run_id_hex: &str, out: &str) -> Result<(), SignError> {
+    let vector_bytes = std::fs::read(vector_path).map_err(|_| SignError::Io)?;
+    let (vector, canon_code, canon_header) =
+        Vector::parse(&vector_bytes).map_err(|_| SignError::Parse)?;
     let canon_hash = shared::compute_canon_hash(&canon_header, &canon_code);
     let mut run_id = [0u8; 32];
-    let run_bytes = hex::decode(run_id_hex)?;
+    let run_bytes = hex::decode(run_id_hex).map_err(|_| SignError::Usage)?;
     if run_bytes.len() != 32 {
-        return Err(anyhow!("run-id must be 32 bytes hex"));
+        return Err(SignError::Usage);
     }
     run_id.copy_from_slice(&run_bytes);
 
-    let approvals = vector
-        .approvals
-        .actions
-        .first()
-        .ok_or_else(|| anyhow!("no approval action"))?;
+    let approvals = vector.approvals.actions.first().ok_or(SignError::Parse)?;
     let payload = ApprovalPayload {
         canon_hash,
         run_id,
@@ -240,37 +263,61 @@ fn sign_from_vector(vector_path: &str, run_id_hex: &str, out: &str) -> Result<()
         action: approvals.action.clone(),
         proposal_id: vector.approvals.proposal_id.clone(),
     };
-    let payload_hash = sha256_bytes(&payload.to_bytes());
+    const DOMAIN_PREFIX: &[u8] = b"YUNITRACK_APPROVAL_V1\0";
+    let mut msg = Vec::with_capacity(DOMAIN_PREFIX.len() + payload.to_bytes().len());
+    msg.extend_from_slice(DOMAIN_PREFIX);
+    msg.extend_from_slice(&payload.to_bytes());
+    let payload_hash = sha256_bytes(&msg);
 
-    let module =
-        env::var("YUNI_PKCS11_MODULE").map_err(|_| anyhow!("YUNI_PKCS11_MODULE env required"))?;
-    let pin = env::var("YUNI_PKCS11_PIN").map_err(|_| anyhow!("YUNI_PKCS11_PIN env required"))?;
-    let key_label = env::var("YUNI_PKCS11_KEY_LABEL")
-        .map_err(|_| anyhow!("YUNI_PKCS11_KEY_LABEL env required"))?;
+    let module = env::var("YUNI_PKCS11_MODULE").map_err(|_| SignError::Usage)?;
+    let pin = env::var("YUNI_PKCS11_PIN").map_err(|_| SignError::Usage)?;
+    let key_label = env::var("YUNI_PKCS11_KEY_LABEL").map_err(|_| SignError::Usage)?;
     let slot_index: usize = env::var("YUNI_PKCS11_SLOT")
         .unwrap_or_else(|_| "0".into())
-        .parse()?;
+        .parse()
+        .map_err(|_| SignError::Usage)?;
 
-    let pkcs11 = Pkcs11::new(&module)?;
-    initialize_pkcs11(&pkcs11)?;
-    let slots = pkcs11.get_all_slots()?;
-    let slot = *slots
-        .get(slot_index)
-        .ok_or_else(|| anyhow!("slot index out of range"))?;
-    let session = pkcs11.open_rw_session(slot)?;
+    let pkcs11 = Pkcs11::new(&module).map_err(|_| SignError::Pkcs11)?;
+    initialize_pkcs11(&pkcs11).map_err(|_| SignError::Pkcs11)?;
+    let slots = pkcs11.get_all_slots().map_err(|_| SignError::Pkcs11)?;
+    let slot = *slots.get(slot_index).ok_or(SignError::Usage)?;
+    let session = pkcs11
+        .open_rw_session(slot)
+        .map_err(|_| SignError::Pkcs11)?;
     let auth_pin = AuthPin::from(pin);
-    session.login(UserType::User, Some(&auth_pin))?;
+    session
+        .login(UserType::User, Some(&auth_pin))
+        .map_err(|_| SignError::Pkcs11)?;
 
-    let key_handle = find_private_key(&session, &key_label)?;
-    let sig_raw = session.sign(&Mechanism::Ecdsa, key_handle, &payload_hash)?;
+    let key_handle = find_private_key(&session, &key_label).map_err(|_| SignError::Pkcs11)?;
+    let sig_raw = session
+        .sign(&Mechanism::Ecdsa, key_handle, &payload_hash)
+        .map_err(|_| SignError::Pkcs11)?;
 
     if sig_raw.len() != 64 {
-        return Err(anyhow!("pkcs11 raw sig must be 64 bytes r||s"));
+        return Err(SignError::Pkcs11);
     }
-    let sig = P256Signature::from_slice(&sig_raw).map_err(|_| anyhow!("raw sig parse"))?;
+    let sig = P256Signature::from_slice(&sig_raw).map_err(|_| SignError::Pkcs11)?;
     let der = sig.to_der().as_bytes().to_vec();
-    std::fs::write(out, der)?;
+    std::fs::write(out, der).map_err(|_| SignError::Io)?;
     Ok(())
+}
+
+#[derive(Debug, Clone, Copy)]
+enum SignError {
+    Usage,
+    Io,
+    Parse,
+    Pkcs11,
+}
+
+fn map_sign_err(e: SignError) -> &'static str {
+    match e {
+        SignError::Usage => FAIL_USAGE,
+        SignError::Io => FAIL_IO,
+        SignError::Parse => FAIL_PARSE,
+        SignError::Pkcs11 => FAIL_PKCS11,
+    }
 }
 
 fn initialize_pkcs11(pkcs11: &Pkcs11) -> Result<()> {

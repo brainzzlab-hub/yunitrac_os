@@ -1,0 +1,45 @@
+<!doctype html>
+<html><head><meta charset='utf-8'>
+<title>Yunitrack Operator Dashboard Preview</title>
+<style>
+body{font-family:system-ui; margin:24px;}
+h1{margin:0 0 8px 0;}
+.row{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 16px 0;}
+.btn{display:inline-block; padding:10px 12px; border-radius:10px; border:1px solid #2a3240; text-decoration:none; color:#111; background:#f4f6fb;}
+.btn:hover{background:#e9eef9;}
+.muted{color:#6b7280;}
+pre, textarea{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+pre{white-space:pre-wrap; background:#0b0f14; color:#d6e1ff; padding:16px; border-radius:12px; line-height:1.25;}
+textarea{width:100%; height:240px; margin-top:12px;}
+</style></head>
+<body>
+<h1>Operator Dashboard (deterministic preview)</h1>
+<div class="row"><a class="btn" href="dashboard_1.txt">Dashboard (txt)</a>
+<a class="btn" href="../audit/evidence_pack_index.json">Evidence pack index</a>
+<a class="btn" href="../audit/index_manifest.json">Audit manifest</a>
+<a class="btn" href="../incident/index_manifest.json">Incident manifest</a>
+<a class="btn" href="../sbom/license_policy_report.json">License policy report</a>
+<a class="btn" href="../control_plane/runbook_report.json">Runbook report</a></div>
+<pre>Yunitrack Operator Dashboard
+================================
+Proof status: PASS | steps=6
+Evidence pack index: PRESENT | entries=7
+License policy: PRESENT | violations=0
+Audit packet: PRESENT | files=6
+Incident bundle: PRESENT | files=8
+HITL markers: SIGNED
+Control-plane ledger: SIGNED
+UX artifacts: PRESENT | count=2
+</pre>
+<textarea readonly>Yunitrack Operator Dashboard
+================================
+Proof status: PASS | steps=6
+Evidence pack index: PRESENT | entries=7
+License policy: PRESENT | violations=0
+Audit packet: PRESENT | files=6
+Incident bundle: PRESENT | files=8
+HITL markers: SIGNED
+Control-plane ledger: SIGNED
+UX artifacts: PRESENT | count=2
+</textarea>
+</body></html>

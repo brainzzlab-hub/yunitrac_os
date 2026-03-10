@@ -281,4 +281,12 @@ mod tests {
             Err(FrameError::NonZeroReserved(1))
         );
     }
+
+    #[test]
+    fn decode_never_panics_on_small_inputs() {
+        for len in 0usize..256 {
+            let buf: Vec<u8> = (0..len).map(|i| (i as u8).wrapping_mul(17)).collect();
+            let _ = RecordFrame::decode(&buf);
+        }
+    }
 }

@@ -1,0 +1,6 @@
+path	file_size	compress_size
+README.txt	48	50
+patterns/email_basic.txt	50	33
+patterns/iban_basic.txt	35	29
+patterns/phone_basic.txt	62	32
+patterns/postal_code_eu.txt	14	16

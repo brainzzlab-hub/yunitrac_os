@@ -1,0 +1,5 @@
+{"created_seq":1,"request_id":"REQ-0001","profile":"enterprise","decision":"ACCEPTED","seccode":"SEC_SIGNED_ACCEPTED","anti_replay":"PASS","approvals_ref":"APP-001"}
+{"created_seq":2,"request_id":"REQ-0002","profile":"enterprise","decision":"REJECTED","seccode":"SEC_UNSIGNED_REJECTED","anti_replay":"PASS"}
+{"created_seq":3,"request_id":"REQ-1001","profile":"lite","decision":"ACCEPTED","seccode":"SEC_SIGNED_ACCEPTED","anti_replay":"UNKNOWN","approvals_ref":"APP-XYZ"}
+{"created_seq":4,"request_id":"REQ-1002","profile":"lite","decision":"REJECTED","seccode":"SEC_POLICY_VIOLATION","anti_replay":"FAIL"}
+{"created_seq":5,"request_id":"REQ-2000","profile":"enterprise","decision":"ACCEPTED","seccode":"SEC_SIGNED_ACCEPTED","anti_replay":"PASS"}

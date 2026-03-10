@@ -1,0 +1,5 @@
+{"agent_id":"agent0","event":"tool_start","input_len":5,"input_sha256":"a8b771920b8319e47251d1360f5e880bc18e8d329b0f0d003ea3c7e615558947","output_len":null,"output_sha256":null,"seq":0,"status":"OK","tool":"search","v":1}
+{"agent_id":"agent0","event":"tool_end","input_len":null,"input_sha256":null,"output_len":6,"output_sha256":"f6a214f7a5fcda0c2cee9660b7fc29f5649e3c68aad48e20e950137c98913a68","seq":1,"status":"OK","tool":"search","v":1}
+{"agent_id":"agent0","event":"agent_action","input_len":6,"input_sha256":"f6a214f7a5fcda0c2cee9660b7fc29f5649e3c68aad48e20e950137c98913a68","output_len":null,"output_sha256":null,"seq":2,"status":"OK","tool":"summarize","v":1}
+{"agent_id":"agent0","event":"tool_end","input_len":null,"input_sha256":null,"output_len":7,"output_sha256":"761b7ad8ad439b2855fcbb611331c646ef0870b0631247bba3f3025cb6df5a53","seq":3,"status":"OK","tool":"summarize","v":1}
+{"agent_id":"agent0","event":"final","input_len":null,"input_sha256":null,"output_len":4,"output_sha256":"a4c3ed04a95a3da14a9d235c83d868bed7c0f45cf7f3faa751ee8f50598d2211","seq":4,"status":"OK","tool":null,"v":1}

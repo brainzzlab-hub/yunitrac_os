@@ -5,7 +5,7 @@ set -euo pipefail
 # Default: require bubblewrap. Fail closed if missing.
 
 if ! command -v bwrap >/dev/null 2>&1; then
-  echo "FAIL: bubblewrap (bwrap) not found; cannot sandbox secure_runner" >&2
+  echo "FAIL: sandbox_missing SEC_SANDBOX_MISSING" >&2
   exit 1
 fi
 
@@ -13,7 +13,7 @@ SEC_BIN="${SEC_BIN:-$(dirname "$0")/../../target/release/secure_runner}"
 SEC_BIN="$(cd "$(dirname "$SEC_BIN")" && pwd)/$(basename "$SEC_BIN")"
 
 if [ ! -x "$SEC_BIN" ]; then
-  echo "FAIL: secure_runner binary not found at $SEC_BIN" >&2
+  echo "FAIL: secure_runner_missing SEC_SECURE_RUNNER_MISSING" >&2
   exit 1
 fi
 
@@ -23,7 +23,7 @@ if [ -n "${SECCOMP_PROFILE:-}" ]; then
   if [ -r "$SECCOMP_PROFILE" ]; then
     SECCOMP_ARGS=(--seccomp "$SECCOMP_PROFILE")
   else
-    echo "FAIL: SECCOMP_PROFILE set but unreadable" >&2
+    echo "FAIL: seccomp_profile_unreadable SEC_SECCOMP_UNREADABLE" >&2
     exit 1
   fi
 fi

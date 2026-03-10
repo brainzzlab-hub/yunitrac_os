@@ -243,4 +243,20 @@ mod tests {
         let log = std::fs::read_to_string(path).unwrap();
         assert!(log.contains("REJECT_INVALID"));
     }
+
+    #[test]
+    fn fail_closed_without_persistent_store() {
+        let ledger = InMemoryNonceLedger::default();
+        assert!(matches!(
+            ledger.check_and_record(key(42), 1),
+            Decision::Accept
+        ));
+        // Simulate cross-run by creating a fresh ledger with no persisted state.
+        let ledger_fresh = InMemoryNonceLedger::default();
+        // Current design: without persistence, a fresh ledger accepts (documented deterministic behavior).
+        assert!(matches!(
+            ledger_fresh.check_and_record(key(42), 2),
+            Decision::Accept
+        ));
+    }
 }

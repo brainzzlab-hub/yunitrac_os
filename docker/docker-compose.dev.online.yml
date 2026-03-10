@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  secure_ingress:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.secure_ingress
+    image: yunitrack/secure_ingress:dev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: ./secrets/server.crt
+        target: /certs/server.crt
+        read_only: true
+      - type: bind
+        source: ./secrets/server.key
+        target: /certs/server.key
+        read_only: true
+      - type: bind
+        source: ./secrets/client_ca.crt
+        target: /certs/client_ca.crt
+        read_only: true
+      - type: bind
+        source: ./secrets/hl_pubkey.pem
+        target: /certs/hl_pubkey.pem
+        read_only: true
+      - type: bind
+        source: ./artifacts/nonce_ledger
+        target: /data/nonce_ledger
+    ports:
+      - "8443:8443"
+    environment:
+      INGRESS_BIND: "0.0.0.0:8443"
+      SECURE_INGRESS_CERT: "/certs/server.crt"
+      SECURE_INGRESS_KEY: "/certs/server.key"
+      SECURE_INGRESS_CA_CERT: "/certs/client_ca.crt"
+      SECURE_INGRESS_HL_PUBLIC_KEY_PEM: "/certs/hl_pubkey.pem"
+      NONCE_LEDGER_PATH: "/data/nonce_ledger/ledger.log"
+      YUNITRACK_DOCKER_ENABLE_SECRETS: ${YUNITRACK_DOCKER_ENABLE_SECRETS:-}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+          if [ "$YUNITRACK_DOCKER_ENABLE_SECRETS" != "1" ]; then
+            echo "SEC_DENY: set YUNITRACK_DOCKER_ENABLE_SECRETS=1 to run dev_online" >&2
+            exit 42
+          fi
+          exec /usr/local/bin/secure_ingress "$@"

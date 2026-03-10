@@ -6,6 +6,7 @@ use axum_server::tls_rustls::RustlsConfig;
 use rustls::server::WebPkiClientVerifier;
 use rustls::{pki_types::CertificateDer, RootCertStore};
 use rustls_pemfile::{certs, pkcs8_private_keys};
+use std::env;
 
 use crate::nonce::{InMemoryNonceLedger, NonceLedger};
 use crate::types::{ApprovalRequest, RunRequest, SignedEnvelope};
@@ -68,14 +69,14 @@ fn current_unix_ts() -> u64 {
 }
 
 pub async fn serve(_state: AppState) -> anyhow::Result<()> {
-    let bind: SocketAddr = std::env::var("INGRESS_BIND")
+    let bind: SocketAddr = env::var("INGRESS_BIND")
         .unwrap_or_else(|_| "127.0.0.1:8443".into())
         .parse()?;
 
-    let server_cert = std::env::var("INGRESS_SERVER_CERT")?;
-    let server_key = std::env::var("INGRESS_SERVER_KEY")?;
-    let client_ca = std::env::var("INGRESS_CLIENT_CA")?;
-    let hl_pubkey = std::env::var("INGRESS_HL_PUBKEY_PEM")?;
+    let server_cert = require_env("SECURE_INGRESS_CERT")?;
+    let server_key = require_env("SECURE_INGRESS_KEY")?;
+    let client_ca = require_env("SECURE_INGRESS_CA_CERT")?;
+    let hl_pubkey = require_env("SECURE_INGRESS_HL_PUBLIC_KEY_PEM")?;
 
     let config = tls_config(&server_cert, &server_key, &client_ca)?;
     let app = router(AppState {
@@ -87,6 +88,13 @@ pub async fn serve(_state: AppState) -> anyhow::Result<()> {
         .serve(app.into_make_service())
         .await?;
     Ok(())
+}
+
+fn require_env(name: &str) -> anyhow::Result<String> {
+    match env::var(name) {
+        Ok(val) if !val.is_empty() => Ok(val),
+        _ => Err(anyhow::anyhow!(format!("{name} missing"))),
+    }
 }
 
 fn tls_config(

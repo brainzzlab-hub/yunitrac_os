@@ -8,6 +8,12 @@ use shared::{compute_canon_hash, compute_tick_hash, derive_run_id, Port, Vector,
 use skeleton::run as skeleton_run;
 use va_gate::run as va_gate_run;
 
+const PASS_LINE: &str = "PASS";
+const FAIL_PARSE: &str = "FAIL: BOUNDARY_PARSE";
+const FAIL_IO: &str = "FAIL: BOUNDARY_IO";
+const FAIL_RUN_ID: &str = "FAIL: BOUNDARY_RUN_ID";
+const FAIL_UNKNOWN: &str = "FAIL: BOUNDARY_UNKNOWN";
+
 #[derive(Debug, Parser)]
 struct Args {
     #[arg(long)]
@@ -22,41 +28,57 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    if let Err(e) = run(args) {
-        eprintln!("FAIL: {e}");
-        std::process::exit(1);
-    }
+    match run(args) {
+        Ok(()) => println!("{PASS_LINE}"),
+        Err(BoundaryError::Parse) => {
+            println!("{FAIL_PARSE}");
+            std::process::exit(1);
+        }
+        Err(BoundaryError::Io) => {
+            println!("{FAIL_IO}");
+            std::process::exit(1);
+        }
+        Err(BoundaryError::RunId) => {
+            println!("{FAIL_RUN_ID}");
+            std::process::exit(1);
+        }
+        Err(BoundaryError::Unknown) => {
+            println!("{FAIL_UNKNOWN}");
+            std::process::exit(1);
+        }
+    };
 }
 
 #[derive(Debug, Error)]
 enum BoundaryError {
-    #[error("read vector: {0}")]
-    VectorRead(std::io::Error),
-    #[error("parse vector: {0}")]
-    VectorParse(String),
-    #[error("read audit key: {0}")]
-    AuditKeyRead(std::io::Error),
-    #[error("io: {0}")]
-    Io(std::io::Error),
+    #[error("parse")]
+    Parse,
+    #[error("io")]
+    Io,
+    #[error("run_id")]
+    RunId,
+    #[error("unknown")]
+    Unknown,
 }
 
 fn run(args: Args) -> Result<(), BoundaryError> {
-    let vector_bytes = std::fs::read(&args.vector).map_err(BoundaryError::VectorRead)?;
+    let vector_bytes = std::fs::read(&args.vector).map_err(|_| BoundaryError::Io)?;
     let (vector, canon_code_bytes, canon_header_bytes) =
-        Vector::parse(&vector_bytes).map_err(|e| BoundaryError::VectorParse(e.to_string()))?;
+        Vector::parse(&vector_bytes).map_err(|_| BoundaryError::Parse)?;
 
     let canon_hash = compute_canon_hash(&canon_header_bytes, &canon_code_bytes);
-    let run_id = args
-        .run_id
-        .as_ref()
-        .map(|s| {
-            let bytes = hex::decode(s).expect("decode run_id");
-            let mut arr = [0u8; 32];
-            arr.copy_from_slice(&bytes);
-            arr
-        })
-        .unwrap_or_else(|| derive_run_id(&vector, &canon_hash));
-    let audit_key = std::fs::read(&args.audit_key).map_err(BoundaryError::AuditKeyRead)?;
+    let run_id = if let Some(run_str) = args.run_id.as_ref() {
+        let bytes = hex::decode(run_str).map_err(|_| BoundaryError::RunId)?;
+        if bytes.len() != 32 {
+            return Err(BoundaryError::RunId);
+        }
+        let mut arr = [0u8; 32];
+        arr.copy_from_slice(&bytes);
+        arr
+    } else {
+        derive_run_id(&vector, &canon_hash)
+    };
+    let audit_key = std::fs::read(&args.audit_key).map_err(|_| BoundaryError::Io)?;
 
     // Baseline sliders captured once at tick 0 (S2).
     let baseline_sliders = vector.sliders;
@@ -112,24 +134,24 @@ fn run(args: Args) -> Result<(), BoundaryError> {
     tick_hash_prev = tick_hash;
 
     // Persist artifacts deterministically.
-    std::fs::create_dir_all(&args.out).map_err(BoundaryError::Io)?;
+    std::fs::create_dir_all(&args.out).map_err(|_| BoundaryError::Io)?;
     std::fs::write(format!("{}/outputs.bin", &args.out), &port.outputs)
-        .map_err(BoundaryError::Io)?;
+        .map_err(|_| BoundaryError::Io)?;
     std::fs::write(
         format!("{}/metrics_records.bin", &args.out),
         join_records(&port.metrics_records),
     )
-    .map_err(BoundaryError::Io)?;
+    .map_err(|_| BoundaryError::Io)?;
     std::fs::write(
         format!("{}/audit_records.bin", &args.out),
         join_records(&port.audit_records),
     )
-    .map_err(BoundaryError::Io)?;
+    .map_err(|_| BoundaryError::Io)?;
     std::fs::write(
         format!("{}/security_records.bin", &args.out),
         join_records(&port.security_records),
     )
-    .map_err(BoundaryError::Io)?;
+    .map_err(|_| BoundaryError::Io)?;
 
     let outputs_hash = shared::sha256_bytes(&port.outputs);
     let metrics_hash = shared::sha256_bytes(&join_records(&port.metrics_records));
@@ -147,11 +169,9 @@ fn run(args: Args) -> Result<(), BoundaryError> {
         "outputs_hash": shared::hex_lower(&outputs_hash),
         "metrics_hash": shared::hex_lower(&metrics_hash),
     });
-    std::fs::write(
-        format!("{}/hashes.json", &args.out),
-        serde_json::to_vec_pretty(&hashes).expect("hashes json"),
-    )
-    .map_err(BoundaryError::Io)?;
+    let hashes_bytes = serde_json::to_vec_pretty(&hashes).map_err(|_| BoundaryError::Unknown)?;
+    std::fs::write(format!("{}/hashes.json", &args.out), hashes_bytes)
+        .map_err(|_| BoundaryError::Io)?;
     Ok(())
 }
 fn join_records(records: &[Vec<u8>]) -> Vec<u8> {

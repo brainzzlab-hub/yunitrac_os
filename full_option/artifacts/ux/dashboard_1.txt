@@ -1,0 +1,10 @@
+Yunitrack Operator Dashboard
+================================
+Proof status: PASS | steps=6
+Evidence pack index: PRESENT | entries=7
+License policy: PRESENT | violations=0
+Audit packet: PRESENT | files=6
+Incident bundle: PRESENT | files=8
+HITL markers: SIGNED
+Control-plane ledger: SIGNED
+UX artifacts: PRESENT | count=2

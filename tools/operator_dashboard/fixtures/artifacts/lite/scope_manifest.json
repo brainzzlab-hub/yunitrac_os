@@ -1,0 +1,1 @@
+{"REQUIRED_EQUALITY_SET":["artifacts/lite/evidence_bundle/required_hashes.json","artifacts/lite/scope_manifest.json","artifacts/proof_report_lite.json"],"EXCLUDED_SET":[{"pattern":"target/**","note":"build outputs"},{"pattern":"artifacts/lite/tmp_*/**","note":"scratch"},{"pattern":"**/*.log","note":"ordering variance"}]}

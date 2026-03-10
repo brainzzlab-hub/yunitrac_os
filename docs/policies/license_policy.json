@@ -1,0 +1,6 @@
+{
+  "version": "1.0",
+  "allow_licenses": ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC"],
+  "deny_licenses": ["AGPL-3.0", "GPL-3.0", "GPL-2.0", "SSPL-1.0"],
+  "unknown_license_behavior": "fail"
+}
