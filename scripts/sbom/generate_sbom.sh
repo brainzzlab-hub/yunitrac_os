@@ -5,10 +5,12 @@ OUT_DIR="$ROOT/artifacts/sbom"
 CYC="$ROOT/artifacts/sbom/cyclonedx.json"
 SPDX="$ROOT/artifacts/sbom/spdx.json"
 
-# fail-closed if tool missing
+# ensure cargo-cyclonedx is present (install if missing)
 if ! command -v cargo-cyclonedx >/dev/null 2>&1; then
-  echo "FAIL: generate_sbom SEC_SBOM_TOOL_MISSING"
-  exit 40
+  if ! cargo install cargo-cyclonedx --locked >/dev/null 2>&1; then
+    echo "FAIL: generate_sbom SEC_SBOM_TOOL_MISSING"
+    exit 40
+  fi
 fi
 
 rm -rf "$OUT_DIR"
