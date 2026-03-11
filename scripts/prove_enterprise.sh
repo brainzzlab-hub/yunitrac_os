@@ -40,14 +40,18 @@ if [ "${CONTROL_PLANE_LEDGER_ENABLED:-0}" -eq 1 ] && [ "${CONTROL_PLANE_LEDGER_S
 fi
 ./scripts/guardrails/gdpr_scrub_scan.sh
 if ! command -v cargo-fuzz >/dev/null 2>&1; then
-  echo "SECURITY: FUZZ_TOOL_MISSING"
-  exit 1
+  if ! cargo install cargo-fuzz --locked >/dev/null 2>&1; then
+    echo "SECURITY: FUZZ_TOOL_MISSING"
+    exit 1
+  fi
 fi
 if ! rustup toolchain list | grep -q '^nightly'; then
-  echo "SECURITY: FUZZ_TOOLCHAIN_MISSING"
-  exit 1
+  if ! rustup toolchain install nightly --profile minimal >/dev/null 2>&1; then
+    echo "SECURITY: FUZZ_TOOLCHAIN_MISSING"
+    exit 1
+  fi
 fi
-if ! env RUSTUP_TOOLCHAIN=nightly CARGO_NET_OFFLINE=true cargo fuzz build fuzz_decode_recordframe; then
+if ! env RUSTUP_TOOLCHAIN=nightly cargo fuzz build fuzz_decode_recordframe; then
   echo "SECURITY: FUZZ_BUILD_FAIL"
   exit 1
 fi
