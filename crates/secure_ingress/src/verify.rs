@@ -93,7 +93,7 @@ pub fn verify_envelope<T: serde::Serialize + fmt::Debug>(
     let pubkey =
         VerifyingKey::from_public_key_pem(hl_pubkey_pem).map_err(|_| VerifyError::PubkeyDecode)?;
     pubkey
-        .verify(digest.as_slice(), &sig)
+        .verify(digest.as_ref(), &sig)
         .map_err(|_| VerifyError::InvalidSignature)?;
 
     Ok(VerifyInput {

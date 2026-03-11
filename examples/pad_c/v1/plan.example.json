@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "shot_id": "shot_001",
+  "scene_id": "scene_intro",
+  "bible_id": "bible_main",
+  "resolved": {
+    "character_id": "char_alex",
+    "style_profile_id": "style_cinematic_v1",
+    "camera_profile_id": "cam_a",
+    "lighting_profile_id": "light_soft_key"
+  },
+  "prompt_tokens_allowlist": ["studio portrait", "neutral pose", "cinematic"],
+  "prompt_tokens_denylist": ["helmet", "fish-eye"],
+  "sec_codes": [],
+  "determinism_scope_note": "Spec-only: no pixel determinism or model binding in v1; scope is token-level gating and SecCode emission only."
+}

@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "shot_id": "shot_002",
+  "scene_id": "scene_intro",
+  "bible_id": "bible_main",
+  "character_id": "char_unknown",  
+  "style_profile_id": "style_cinematic_v1",
+  "requested_variance": 8,
+  "reference_asset_ids": ["token:forbidden"]
+}

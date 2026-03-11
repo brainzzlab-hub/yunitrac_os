@@ -2,67 +2,93 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-export ROOT
 SCOPE="$ROOT/artifacts/lite/scope_manifest.json"
-MANIFEST="$ROOT/artifacts/lite/evidence_bundle/manifest.json"
+BUNDLE="$ROOT/artifacts/lite/evidence_bundle"
+MANIFEST="$BUNDLE/manifest.json"
 
-fail() { echo "SECURITY: SCOPE_MANIFEST_INVALID"; exit 1; }
+fail() {
+  echo "FAIL: scope_manifest_verify $1"
+  exit 1
+}
 
-[ -f "$SCOPE" ] || fail
-[ -f "$MANIFEST" ] || fail
+[ -f "$SCOPE" ] || fail "SCOPE_MISSING"
+[ -f "$MANIFEST" ] || fail "EVIDENCE_MANIFEST_MISSING"
 
-python3 - <<'PY' || exit 1
-import json, os, pathlib, sys
-root = pathlib.Path(os.environ.get("ROOT", ".")).resolve()
-scope_path = root / "artifacts/lite/scope_manifest.json"
-manifest_path = root / "artifacts/lite/evidence_bundle/manifest.json"
+python3 - <<'PY'
+import json
+from pathlib import Path
+import sys
 
-def fail():
-    sys.exit(1)
+root = Path(".").resolve()
+scope = Path("artifacts/lite/scope_manifest.json")
+manifest_path = Path("artifacts/lite/evidence_bundle/manifest.json")
+bundle_root = Path("artifacts/lite/evidence_bundle")
 
-try:
-    scope = json.loads(scope_path.read_text())
-    manifest = json.loads(manifest_path.read_text())
-except Exception:
-    fail()
+fail = lambda msg: (print(f"FAIL: scope_manifest_verify {msg}"), sys.exit(1))
 
-req = scope.get("REQUIRED_EQUALITY_SET")
-exc = scope.get("EXCLUDED_SET")
-if not isinstance(req, list) or not req:
-    fail()
-if req != sorted(req):
-    fail()
-if not isinstance(exc, list):
-    fail()
-# Check reasons/notes present
-for entry in exc:
-    if not isinstance(entry, dict):
-        fail()
-    if "pattern" not in entry or ("reason" not in entry and "note" not in entry):
-        fail()
-# No direct overlap (string equality) between required and excluded patterns
-excluded_patterns = {e["pattern"] for e in exc if isinstance(e, dict) and "pattern" in e}
-if any(path in excluded_patterns for path in req):
-    fail()
-
-# Manifest file list
-files = manifest.get("files")
-if not isinstance(files, list):
-    fail()
-files_set = set(files)
-
-# Required files must exist on disk and if under evidence_bundle, must be listed in manifest
-for path_str in req:
-    p = root / path_str
-    if not p.exists():
-        fail()
-    # If within evidence_bundle, enforce manifest presence
+def load_json(path: Path):
     try:
-        eb = root / "artifacts/lite/evidence_bundle"
-        if eb in p.parents and p.relative_to(eb).as_posix() not in files_set:
-            fail()
-    except ValueError:
-        pass
+        return json.loads(path.read_text())
+    except Exception as exc:
+        fail(f"INVALID_JSON {path}: {exc}")
 
-sys.exit(0)
+scope_json = load_json(scope)
+man_json = load_json(manifest_path)
+
+req = scope_json.get("REQUIRED_EQUALITY_SET")
+exc = scope_json.get("EXCLUDED_SET")
+if not isinstance(req, list) or len(req) == 0:
+    fail("REQUIRED_EQUALITY_SET_INVALID")
+if sorted(req) != req:
+    fail("REQUIRED_EQUALITY_SET_NOT_SORTED")
+if not isinstance(exc, list):
+    fail("EXCLUDED_SET_INVALID")
+exc_patterns = []
+allowed_notes = {"build outputs", "scratch", "ordering variance"}
+for item in exc:
+    if not isinstance(item, dict):
+        fail("EXCLUDED_SET_ENTRY_NOT_OBJECT")
+    pat = item.get("pattern")
+    note = item.get("note")
+    if not isinstance(pat, str) or not pat:
+        fail("EXCLUDED_SET_PATTERN_INVALID")
+    if not isinstance(note, str) or note not in allowed_notes:
+        fail("EXCLUDED_SET_NOTE_INVALID")
+    exc_patterns.append(pat)
+if sorted(exc, key=lambda x: x.get("pattern")) != exc:
+    fail("EXCLUDED_SET_NOT_SORTED")
+
+# Overlap check
+if any(p in exc_patterns for p in req):
+    fail("REQUIRED_EXCLUDED_OVERLAP")
+
+man_files = []
+if not isinstance(man_json, dict) or set(man_json.keys()) != {"files"}:
+    fail("MANIFEST_KEYS_INVALID")
+files = man_json.get("files")
+if not isinstance(files, list):
+    fail("MANIFEST_FILES_INVALID")
+if sorted(files) != files:
+    fail("MANIFEST_FILES_NOT_SORTED")
+# determinism: file content equals normalized form
+normalized = json.dumps({"files": files}, sort_keys=True, separators=(",", ":"))
+if manifest_path.read_text().strip() != normalized:
+    fail("MANIFEST_NOT_NORMALIZED")
+
+manifest_set = set(files)
+for entry in req:
+    p = Path(entry)
+    if p.is_absolute():
+        fail("REQUIRED_ABSOLUTE_PATH")
+    full = Path(entry)
+    if full.exists():
+        continue
+    try:
+        rel = p.relative_to(bundle_root)
+    except ValueError:
+        rel = p
+    if rel.as_posix() not in manifest_set:
+        fail("REQUIRED_MISSING:" + entry)
+
+print("PASS: scope_manifest_verify SEC_OK")
 PY

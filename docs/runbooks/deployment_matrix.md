@@ -1,56 +1,33 @@
-# Deployment & Assurance Matrix (Enterprise vs Lite)
+# Deployment Matrix — Dual Profile (Enterprise vs Lite)
 
-## Profiles overview
-- **Enterprise (E):** production-grade, diode-first, no MVP/demo concessions. Boundaries: no time, no network, no filesystem IO (beyond diode write), no randomness, no threads/async, no stdout/stderr logging.
-- **Lite (L):** scoped-determinism profile for local/CI comparability. Same canon and no-feedback rules; determinism scoped to defined equality set and scope_manifest.
+## Commands
+- Profile E (Enterprise): `./scripts/prove_enterprise.sh`
+- Profile L (Lite): `./scripts/prove_lite.sh`
 
-## Proofable claims (mechanically enforced under stated assumptions)
-- **E:** deterministic outputs/audit/metrics/security across B==C; audit HMAC chain verified; PKCS#11 approvals (unsigned rejected, signed accepted); anti-replay (nonce ledger); diode-first one-way; bucket policies (AUDIT/SECURITY content-free, METRICS numeric bounded/quantized).
-- **L:** deterministic equality on REQUIRED_EQUALITY_SET; content-free evidence bundle; scope_manifest declares in/out of scope; no-feedback result channel bounded to SecCode enum.
+## Proof Artifacts
+- Enterprise: `artifacts/proof_report_enterprise.json`
+- Lite: `artifacts/proof_report_lite.json`
+- Shared lite scope: `artifacts/lite/scope_manifest.json`
+- Evidence bundles: `artifacts/*/evidence_bundle/*` (enterprise + lite bundles)
 
-## Non-claims / out-of-scope
-- **E:** does not cover host OS hardening beyond documented sandbox wrapper; no guarantee for unpinned external services; no data-at-rest encryption beyond deployment choices.
-- **L:** does not include PKCS#11, audit chain verification, or full diode transport; excludes target/ build artifacts and scratch dirs; no performance/throughput guarantees.
+## Capability Matrix
+| Capability | Profile E (Enterprise) | Profile L (Lite) |
+| --- | --- | --- |
+| Diode-grade audit chain | Yes | Yes (lite) |
+| Deterministic triple-run outputs | Yes (A/B/C) | Yes (B/C) |
+| HITL marker verification | Optional (skip if not required) | Optional (skip if not required) |
+| SBOM + license gate | Yes | Yes |
+| GDPR scrub scan | Yes | Yes |
+| Fuzz build check | Yes | Yes |
+| Anti-replay guard | Yes (enterprise profile) | Yes (lite profile) |
+| Metrics numeric-only guard | Yes | Yes |
+| Scope manifest verification | Not applicable | Yes (scope_manifest_verify) |
 
-## Boundary restrictions summary
-- **E:** sandboxed secure_runner: no time/network/fs/rand/threads/stdout; exits limited to AUDIT/METRICS/SECURITY/OUTPUTS via diode frames.
-- **L:** same codebase, but determinism proof limited to declared files; no feedback; runs use host tools only; scratch dirs excluded.
+## Claims
+- Enterprise: deterministic A/B/C runs with audit hash chain, HITL optional, full SBOM/license gate, GDPR scrub, anti-replay, fuzz build required, produces `artifacts/proof_report_enterprise.json` and `artifacts/enterprise/evidence_bundle/*`.
+- Lite: deterministic B/C equality over scope/evidence bundle, scope manifest enforced, SBOM/license gate, GDPR scrub, anti-replay (lite), produces `artifacts/proof_report_lite.json`, `artifacts/lite/scope_manifest.json`, and `artifacts/lite/evidence_bundle/*`.
 
-## No-feedback model (E/L)
-- ac input: canon blob + tick (+ tick_hash). No reasons, no approvals, no pubkeys returned.
-- result channel: bounded SecCode values only; no near-pass hints.
-
-## Diode-first vs soft-diode
-- **E:** hard one-way: secure_runner writer-only; ro_out_receiver reader-only; no acks; gate_no_ack enforces; gate_boundary_deps enforces boundary purity.
-- **L:** assumes same one-way discipline; soft-diode acceptable for local run but no reverse channel allowed.
-
-## Evidence artifacts layout
-- **E:** `artifacts/enterprise/runA|B|C/*`, evidence bundle under `artifacts/enterprise/evidence_bundle/`, summary `artifacts/proof_report_enterprise.json`. Buckets are content-free (AUDIT/SECURITY) and numeric-only bounded (METRICS).
-- **L:** `artifacts/proof_report_lite.json`, `artifacts/lite/scope_manifest.json`, evidence bundle under `artifacts/lite/evidence_bundle/`, temporary B/C outputs in `artifacts/lite/tmp_B|tmp_C`.
-
-## Customer-facing assurance (Friday pitch)
-- Value (E): Deterministic, diode-first runtime with signed approvals and verifiable evidence bundle—production posture.
-  Value (L): Scope-limited deterministic proof for local/CI without changing the build.
-- Demo script: run `./scripts/prove_enterprise.sh`; observe PASS lines; evidence in `artifacts/enterprise/*` and `artifacts/proof_report_enterprise.json`.
-- Security posture checklist: diode enforced, no-feedback, deterministic outputs, audit chain fail-closed, PKCS#11 approvals, anti-replay via nonce ledger, GDPR buckets (AUDIT/SECURITY content-free; METRICS numeric/bounded/quantized).
-- GDPR minimal policy: AUDIT/SECURITY contain no payload content/PII; METRICS numeric-only within fixed ranges/quantization; OUTPUTS are deterministic payloads only.
-
-## Decision criteria checklist (platform comparison, no build changes)
-- Determinism proof scope (files/hashes, REQUIRED_EQUALITY_SET) matches between platforms.
-- One-way transport enforced; no feedback channels.
-- Content-free audit/security; numeric-only metrics.
-- Approval/nonce handling (accepted/rejected, no replay).
-- Evidence bundle completeness and canonical JSON formatting.
-- Canonical footer for rendered block (both profiles share wording):  
-  `Generated by yunitrack_os | Stateless | No data retained`
-
-## Commands (canonical)
-- Enterprise: `./scripts/prove_enterprise.sh`
-- Lite: `./scripts/prove_lite.sh`
-
-## Key artifacts
-- `artifacts/proof_report_enterprise.json`
-- `artifacts/proof_report_lite.json`
-- `artifacts/lite/scope_manifest.json`
-- `artifacts/enterprise/evidence_bundle/*`
-- `artifacts/lite/evidence_bundle/*`
+## Non-claims
+- Neither profile provides production deployment scripts or networking; both are proof-mode only.
+- HITL signatures are optional unless explicitly enabled via environment.
+- No runtime access to secrets or external key material is included in these proofs.

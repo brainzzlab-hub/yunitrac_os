@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yunitrack.dev/schemas_pad_c/v1/shot_bible.schema.json",
+  "title": "ShotBible v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "bible_id", "characters", "style_profiles", "variance_policy"],
+  "properties": {
+    "version": {"const": "1"},
+    "bible_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "characters": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["character_id", "allowlist_tokens", "denylist_tokens", "wardrobe_ids", "palette_ids"],
+        "properties": {
+          "character_id": {"type": "string", "minLength": 1, "maxLength": 64},
+          "allowlist_tokens": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 64,
+            "items": {"type": "string", "minLength": 1, "maxLength": 64}
+          },
+          "denylist_tokens": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 64,
+            "items": {"type": "string", "minLength": 1, "maxLength": 64}
+          },
+          "wardrobe_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 32,
+            "items": {"type": "string", "minLength": 1, "maxLength": 64}
+          },
+          "palette_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 32,
+            "items": {"type": "string", "minLength": 1, "maxLength": 64}
+          }
+        }
+      }
+    },
+    "style_profiles": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["style_profile_id", "allowlist_tokens", "denylist_tokens", "camera_profile_id", "lighting_profile_id"],
+        "properties": {
+          "style_profile_id": {"type": "string", "minLength": 1, "maxLength": 64},
+          "allowlist_tokens": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 64,
+            "items": {"type": "string", "minLength": 1, "maxLength": 64}
+          },
+          "denylist_tokens": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 64,
+            "items": {"type": "string", "minLength": 1, "maxLength": 64}
+          },
+          "camera_profile_id": {"type": "string", "minLength": 1, "maxLength": 64},
+          "lighting_profile_id": {"type": "string", "minLength": 1, "maxLength": 64}
+        }
+      }
+    },
+    "variance_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_drift_points", "allowed_variance_step"],
+      "properties": {
+        "max_drift_points": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "allowed_variance_step": {"type": "integer", "minimum": 0, "maximum": 100, "multipleOf": 2}
+      }
+    }
+  }
+}
