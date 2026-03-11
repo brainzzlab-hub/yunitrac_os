@@ -16,6 +16,8 @@ jobs:
           components: clippy, rustfmt
       - name: Cache
         uses: Swatinem/rust-cache@v2
+      - name: install cargo-deny
+        run: cargo install cargo-deny --locked
       - name: fmt
         run: cargo fmt -- --check
       - name: clippy
