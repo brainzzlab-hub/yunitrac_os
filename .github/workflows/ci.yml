@@ -34,6 +34,8 @@ jobs:
         run: ./scripts/prove_enterprise.sh
       - name: cargo deny
         run: cargo deny check
+      - name: install cargo-audit
+        run: cargo install cargo-audit --locked --version 0.20.1
       - name: cargo audit
         run: cargo audit --locked
       - name: sbom
