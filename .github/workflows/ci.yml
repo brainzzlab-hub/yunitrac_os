@@ -38,7 +38,7 @@ jobs:
       - name: install cargo-audit
         run: cargo install cargo-audit --locked --version 0.20.1
       - name: cargo audit
-        run: cargo audit --locked
+        run: cargo audit
       - name: sbom
         run: ./scripts/sbom_generate.sh
       - name: install cargo-fuzz
