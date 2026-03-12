@@ -23,6 +23,8 @@ jobs:
           URL="https://github.com/EmbarkStudios/cargo-deny/releases/download/${DENY_VERSION}/cargo-deny-${TARGET}.tar.gz"
           curl -sSL "$URL" | tar -xz -C /tmp
           echo "/tmp/cargo-deny-${TARGET}" >> "$GITHUB_PATH"
+          # ensure advisory DB with CVSS 4.0 parses by updating db schema
+          cargo deny fetch --advisory-db /tmp/advisory-db --stale -q || true
       - name: fmt
         run: cargo fmt -- --check
       - name: clippy
