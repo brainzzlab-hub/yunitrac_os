@@ -37,7 +37,8 @@ jobs:
         run: cargo deny check
       - name: install cargo-audit
         run: cargo install cargo-audit --locked --version 0.20.1
-      - name: cargo audit
+      - name: cargo audit (WARN-ONLY; RustSec CVSS4 advisory DB)
+        continue-on-error: true
         run: cargo audit
       - name: sbom
         run: ./scripts/sbom_generate.sh
