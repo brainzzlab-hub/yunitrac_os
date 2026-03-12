@@ -1,0 +1,71 @@
+# yunitrack_proofs.yml
+name: YuniTrack Proofs
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  proofs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y softhsm2 opensc
+
+      - name: Install Rust toolchain
+        run: |
+          rustup show
+          rustup toolchain install stable
+          rustup override set stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cargo fmt
+        run: cargo fmt --check
+
+      - name: Cargo clippy
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Cargo test
+        run: cargo test --workspace
+
+      - name: Prepare audit key
+        run: |
+          mkdir -p secrets
+          if [ ! -f secrets/audit_key.bin ]; then
+            dd if=/dev/zero bs=32 count=1 of=secrets/audit_key.bin 2>/dev/null
+          fi
+
+      - name: Prove lite
+        run: ./scripts/prove_lite.sh
+
+      - name: Prove enterprise
+        run: ./scripts/prove_enterprise.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yunitrack-artifacts-${{ github.run_id }}
+          if-no-files-found: ignore
+          path: |
+            artifacts/compliance/**
+            artifacts/audit/**
+            artifacts/attestations/**
+            artifacts/security/**
+            artifacts/ux/**
+            artifacts/trace*/**

@@ -1,4 +1,5 @@
 # YuniTrack OS — Deterministic, Fail-Closed Evidence Harness for Agent Governance
+[![YuniTrack Proofs](https://github.com/brainzzlab-hub/yunitrac_os/actions/workflows/yunitrack_proofs.yml/badge.svg)](https://github.com/brainzzlab-hub/yunitrac_os/actions/workflows/yunitrack_proofs.yml)
 Proof-grade harness for agent governance that emits bounded, reproducible evidence on every run.
 
 ## Quick Verify (copy/paste)
