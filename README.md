@@ -46,3 +46,19 @@ See PROOF.md for checks, SECURITY_MODEL.md for boundaries, and CANON.txt for the
 - Security advisory tools (cargo-audit / cargo-deny) are warn-only due to upstream CVSS4 advisory DB format drift.
 
 # yunitrac_os proof commands
+# yunitrac_os
+
+**What it is:** deterministic, diode-first governance skeleton for running “agents/actors” under strict boundaries, with proof scripts and evidence.
+
+**Quick test (local):**
+- `./scripts/prove.sh`
+- `./scripts/prove_enterprise.sh`
+- `./scripts/prove_lite.sh`
+
+**Evidence (PDFs):**
+- `docs/evidence/YuniTrack_Verified_Green_Checklist.pdf`
+- `docs/evidence/YuniTrack_Technisch_Rapport.pdf`
+
+**If this repo is useful:** click ⭐ **Star** on GitHub. It helps others find it.
+
+---
